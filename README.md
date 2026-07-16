@@ -2,6 +2,18 @@
 
 这是 Codex / Claude 用量小组件的公开发布仓库，只包含 Scriptable 前端和 `/usage` API 契约，不包含采集后端、账号凭据或部署配置。
 
+## 效果展示
+
+<p align="center">
+  <img src="docs/images/widget-gallery.jpg" alt="Codex 和 Claude 小组件多尺寸效果" width="360">
+</p>
+<p align="center"><sub>Codex / Claude 单服务、双服务与周用量图表</sub></p>
+
+<p align="center">
+  <img src="docs/images/widget-landscape.jpg" alt="Codex 用量小组件横屏效果" width="720">
+</p>
+<p align="center"><sub>Codex 用量横屏效果</sub></p>
+
 ## 下载
 
 从 [Latest Release](https://github.com/MananaFX/Scritable-Codex-Usage/releases/latest) 只需下载：
