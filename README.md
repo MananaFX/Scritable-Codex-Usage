@@ -7,8 +7,8 @@
 从 [Latest Release](https://github.com/MananaFX/Scriptables-Public/releases/latest) 下载：
 
 - `Scriptables-版本号.zip`：完整发布包。
-- `「源码」Codex用量.js`：Codex / Claude 组合小组件。
-- `「源码」Claude用量.js`：Claude 单服务小组件。
+- `Codex-Usage.js`：Codex / Claude 组合小组件。
+- `Claude-Usage.js`：Claude 单服务小组件。
 - `install-runtime.js`：自动下载两个小组件的 Scriptable 安装器。
 - `usage-api-schema.json`：后端接口 JSON Schema。
 
