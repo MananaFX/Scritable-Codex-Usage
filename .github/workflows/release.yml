@@ -1,0 +1,73 @@
+name: Release Scriptable Widgets
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v0.2.0"
+        required: true
+        default: "v0.1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            tag="$INPUT_TAG"
+          else
+            tag="$REF_NAME"
+          fi
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release tag: $tag" >&2
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Validate public files
+        run: |
+          node --check install-runtime.js
+          node --check 'Scripts/「源码」Codex用量.js'
+          node --check 'Scripts/「源码」Claude用量.js'
+          python3 -m json.tool docs/usage-api-schema.json >/dev/null
+
+      - name: Build release package
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          mkdir -p dist
+          zip -r "dist/Scriptables-${TAG}.zip" README.md install-runtime.js docs Scripts
+          cp install-runtime.js dist/install-runtime.js
+          cp docs/usage-api-schema.json dist/usage-api-schema.json
+          cp 'Scripts/「源码」Codex用量.js' 'dist/「源码」Codex用量.js'
+          cp 'Scripts/「源码」Claude用量.js' 'dist/「源码」Claude用量.js'
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* \
+              --target "$GITHUB_SHA" \
+              --title "Scriptables $TAG" \
+              --generate-notes \
+              --notes "下载后请将 DEFAULT_SERVER 修改为你自己的 HTTPS 用量 API。"
+          fi

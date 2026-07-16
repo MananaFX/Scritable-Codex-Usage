@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MananaFX/Scriptables-Public/blob/main/docs/usage-api-schema.json",
+  "title": "Scriptable Combined Usage Response",
+  "description": "Response shape accepted by the public Codex and Claude usage widgets.",
+  "type": "object",
+  "required": ["ok", "generated_at", "latest_at", "source_mode", "services"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "latest_at": { "type": ["string", "null"], "format": "date-time" },
+    "source_mode": { "const": "combined" },
+    "stale": { "type": "boolean" },
+    "services": {
+      "type": "object",
+      "required": ["codex", "claude"],
+      "properties": {
+        "codex": { "$ref": "#/$defs/codexUsage" },
+        "claude": { "$ref": "#/$defs/claudeUsage" }
+      },
+      "additionalProperties": true
+    },
+    "history_7d": {
+      "description": "Optional compatibility alias for services.codex.history_7d.",
+      "$ref": "#/$defs/history"
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "rateLimitWindow": {
+      "type": ["object", "null"],
+      "properties": {
+        "used_percent": { "type": ["number", "null"], "minimum": 0 },
+        "window_minutes": { "type": ["number", "null"], "minimum": 0 },
+        "resets_at": {
+          "description": "Unix timestamp in seconds.",
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "resets_at_iso": { "type": ["string", "null"], "format": "date-time" },
+        "remaining_seconds": { "type": ["number", "null"], "minimum": 0 },
+        "label": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "historyPoint": {
+      "type": "object",
+      "required": ["date", "val"],
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "val": { "type": "number", "minimum": 0 },
+        "tokens": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "history": {
+      "type": "array",
+      "maxItems": 7,
+      "items": { "$ref": "#/$defs/historyPoint" }
+    },
+    "baseUsage": {
+      "type": "object",
+      "required": ["ok", "generated_at", "latest_at", "source_mode", "five_hour", "weekly", "stale"],
+      "properties": {
+        "ok": { "type": "boolean" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "latest_at": { "type": ["string", "null"], "format": "date-time" },
+        "source_mode": { "type": "string" },
+        "five_hour": { "$ref": "#/$defs/rateLimitWindow" },
+        "weekly": { "$ref": "#/$defs/rateLimitWindow" },
+        "stale": { "type": "boolean" },
+        "error": { "type": "string" }
+      }
+    },
+    "codexUsage": {
+      "allOf": [
+        { "$ref": "#/$defs/baseUsage" },
+        {
+          "type": "object",
+          "properties": {
+            "plan_type": { "type": ["string", "null"] },
+            "limit_id": { "type": ["string", "null"] },
+            "labels": {
+              "type": "object",
+              "properties": {
+                "primary": { "type": "string" },
+                "secondary": { "type": "string" }
+              },
+              "additionalProperties": true
+            },
+            "tokens": { "type": ["object", "null"], "additionalProperties": true },
+            "history_7d": { "$ref": "#/$defs/history" }
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
+    "claudeUsage": {
+      "allOf": [
+        { "$ref": "#/$defs/baseUsage" },
+        {
+          "type": "object",
+          "properties": {
+            "model": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        }
+      ]
+    }
+  }
+}
