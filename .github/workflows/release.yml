@@ -1,4 +1,4 @@
-name: Release Scriptable Widgets
+name: Release Codex Usage Widget
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
       tag:
         description: "Release tag, for example v0.2.0"
         required: true
-        default: "v0.1.0"
+        default: "v0.2.0"
 
 permissions:
   contents: write
@@ -43,7 +43,6 @@ jobs:
         run: |
           node --check install-runtime.js
           node --check 'Scripts/「源码」Codex用量.js'
-          node --check 'Scripts/「源码」Claude用量.js'
           python3 -m json.tool docs/usage-api-schema.json >/dev/null
 
       - name: Build release package
@@ -51,11 +50,10 @@ jobs:
           TAG: ${{ steps.release.outputs.tag }}
         run: |
           mkdir -p dist
-          zip -r "dist/Scriptables-${TAG}.zip" README.md install-runtime.js docs Scripts
+          zip -r "dist/Scritable-Codex-Usage-${TAG}.zip" README.md install-runtime.js docs Scripts
           cp install-runtime.js dist/install-runtime.js
           cp docs/usage-api-schema.json dist/usage-api-schema.json
           cp 'Scripts/「源码」Codex用量.js' dist/Codex-Usage.js
-          cp 'Scripts/「源码」Claude用量.js' dist/Claude-Usage.js
 
       - name: Create or update GitHub Release
         env:
@@ -67,7 +65,7 @@ jobs:
           else
             gh release create "$TAG" dist/* \
               --target "$GITHUB_SHA" \
-              --title "Scriptables $TAG" \
+              --title "Scritable Codex Usage $TAG" \
               --generate-notes \
               --notes "下载后请将 DEFAULT_SERVER 修改为你自己的 HTTPS 用量 API。"
           fi

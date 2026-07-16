@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/MananaFX/Scriptables-Public/blob/main/docs/usage-api-schema.json",
+  "$id": "https://github.com/MananaFX/Scritable-Codex-Usage/blob/main/docs/usage-api-schema.json",
   "title": "Scriptable Combined Usage Response",
   "description": "Response shape accepted by the public Codex and Claude usage widgets.",
   "type": "object",
