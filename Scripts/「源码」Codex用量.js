@@ -346,8 +346,7 @@ function serviceUsage(id, data) {
   const source = services[id] || singleServiceSource(id, data)
 
   if (id === "codex") {
-    const primary = serviceLimit(source, ["five_hour"]) || (data ? data.five_hour : null)
-    const secondary = serviceLimit(source, ["weekly"]) || (data ? data.weekly : null)
+    const limits = classifyCodexDisplayLimits(source, data)
     return {
       id,
       name: "Codex",
@@ -355,10 +354,10 @@ function serviceUsage(id, data) {
       ok: Boolean(source && source.ok),
       stale: Boolean(source && source.stale),
       latestAt: source ? source.latest_at || source.generated_at : null,
-      primaryLabel: limitLabel(source, primary, "primary", "--"),
-      secondaryLabel: limitLabel(source, secondary, "secondary", "Week"),
-      primary,
-      secondary
+      primaryLabel: "5h",
+      secondaryLabel: "Week",
+      primary: limits.fiveHour,
+      secondary: limits.weekly
     }
   }
 
@@ -408,22 +407,69 @@ function serviceLimit(source, names) {
   return null
 }
 
+function limitWindowMinutes(limit) {
+  if (!limit) return 0
+  return Number(limit.window_minutes || limit.windowDurationMins || limit.windowMinutes || 0)
+}
+
+function isWindowAround(actual, expected) {
+  if (!Number.isFinite(actual) || actual <= 0) return false
+  return Math.abs(actual - expected) <= Math.max(5, expected * 0.05)
+}
+
+function limitWindowKind(limit) {
+  const minutes = limitWindowMinutes(limit)
+  if (isWindowAround(minutes, 300)) return "fiveHour"
+  if (isWindowAround(minutes, 10080)) return "weekly"
+
+  const label = String(limit && (limit.label || limit.name || limit.limitName) || "").toLowerCase()
+  if (/week|weekly|seven|7d|周/.test(label)) return "weekly"
+  if (/5\s*h|five|5-hour/.test(label)) return "fiveHour"
+  return null
+}
+
+function classifyCodexDisplayLimits(source, data) {
+  const fiveHourNamed = [source && source.five_hour, data && data.five_hour]
+  const weeklyNamed = [source && source.weekly, data && data.weekly]
+  const candidates = [
+    ...fiveHourNamed,
+    ...weeklyNamed,
+    source && source.primary,
+    source && source.secondary
+  ]
+  const seen = new Set()
+  let fiveHour = null
+  let weekly = null
+
+  for (const limit of candidates) {
+    if (!limit || typeof limit !== "object" || seen.has(limit)) continue
+    seen.add(limit)
+    const kind = limitWindowKind(limit)
+    if (!fiveHour && kind === "fiveHour") fiveHour = limit
+    if (!weekly && kind === "weekly") weekly = limit
+  }
+
+  for (const limit of fiveHourNamed) {
+    if (fiveHour || !limit || typeof limit !== "object") continue
+    const kind = limitWindowKind(limit)
+    if (!kind || kind === "fiveHour") fiveHour = limit
+  }
+
+  for (const limit of weeklyNamed) {
+    if (weekly || !limit || typeof limit !== "object") continue
+    const kind = limitWindowKind(limit)
+    if (!kind || kind === "weekly") weekly = limit
+  }
+
+  return { fiveHour, weekly }
+}
+
 function serviceLabel(source, key, fallback) {
   if (!source) return fallback
   const direct = source[`${key}_label`]
   if (direct) return String(direct)
   const labels = source.labels || {}
   return labels[key] ? String(labels[key]) : fallback
-}
-
-function limitLabel(source, limit, key, fallback) {
-  if (limit && limit.label) return String(limit.label)
-  const label = serviceLabel(source, key, null)
-  if (label) return label
-  const minutes = limit ? Number(limit.window_minutes || limit.windowDurationMins || 0) : 0
-  if (minutes >= 290 && minutes <= 310) return "5h"
-  if (minutes >= 9800 && minutes <= 10360) return "Week"
-  return fallback
 }
 
 function widgetLayout(family) {

@@ -41,7 +41,6 @@ jobs:
 
       - name: Validate public files
         run: |
-          node --check install-runtime.js
           node --check 'Scripts/「源码」Codex用量.js'
           python3 -m json.tool docs/usage-api-schema.json >/dev/null
 
@@ -50,9 +49,6 @@ jobs:
           TAG: ${{ steps.release.outputs.tag }}
         run: |
           mkdir -p dist
-          zip -r "dist/Scritable-Codex-Usage-${TAG}.zip" README.md install-runtime.js docs Scripts
-          cp install-runtime.js dist/install-runtime.js
-          cp docs/usage-api-schema.json dist/usage-api-schema.json
           cp 'Scripts/「源码」Codex用量.js' dist/Codex-Usage.js
 
       - name: Create or update GitHub Release
@@ -67,5 +63,5 @@ jobs:
               --target "$GITHUB_SHA" \
               --title "Scritable Codex Usage $TAG" \
               --generate-notes \
-              --notes "下载后请将 DEFAULT_SERVER 修改为你自己的 HTTPS 用量 API。"
+              --notes "只需下载 Codex-Usage.js，使用 Scriptable App 打开后，将 DEFAULT_SERVER 修改为你自己的 HTTPS 用量 API。"
           fi
